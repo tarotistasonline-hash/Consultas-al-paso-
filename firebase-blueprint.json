@@ -1,0 +1,201 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Estadísticas agregadas y configuraciones de personalización del usuario",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "ID único de Firebase Auth"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email principal asociado"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["cruda", "sober"],
+          "description": "Tema preferido de la interfaz"
+        },
+        "resolvedDilemas": {
+          "type": "number",
+          "description": "Total general de dilemas analizados"
+        },
+        "charactersOfTruth": {
+          "type": "number",
+          "description": "Cantidad de caracteres redactados"
+        },
+        "categories": {
+          "type": "object",
+          "description": "Contadores por categoría"
+        },
+        "trend": {
+          "type": "array",
+          "description": "Estadísticas diarias del usuario"
+        },
+        "monthlyTrend": {
+          "type": "array",
+          "description": "Estadísticas mensuales del usuario"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp del servidor de última actualización"
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "ChatTurn": {
+      "title": "ChatTurn",
+      "description": "Mensaje en un subcolección de historial del usuario",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID del mensaje"
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID del usuario propietario"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant"],
+          "description": "Remitente o actor"
+        },
+        "content": {
+          "type": "string",
+          "description": "Mensaje de texto literal"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Cadena de hora legible"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Momento de creación"
+        },
+        "rating": {
+          "type": "string",
+          "enum": ["up", "down", "null"],
+          "description": "Rating o utilidad del copy"
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoría en curso"
+        },
+        "filterLevel": {
+          "type": "string",
+          "description": "Tono de marketing o nivel de filtro"
+        }
+      },
+      "required": ["id", "userId", "role", "content", "createdAt"]
+    },
+    "GlobalStats": {
+      "title": "GlobalStats",
+      "description": "Métricas globales agregadas para toda la aplicación",
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "number",
+          "description": "Contador general acumulativo de visitas o eventos"
+        }
+      },
+      "required": ["count"]
+    },
+    "BmiRecord": {
+      "title": "BmiRecord",
+      "description": "Registro de mediciones históricas de IMC del usuario",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID del registro de IMC"
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID del usuario propietario"
+        },
+        "weight": {
+          "type": "number",
+          "description": "Peso en kilogramos"
+        },
+        "height": {
+          "type": "number",
+          "description": "Altura en centímetros"
+        },
+        "bmi": {
+          "type": "number",
+          "description": "Índice de masa corporal calculado"
+        },
+        "date": {
+          "type": "string",
+          "description": "Fecha de la medición registrada (ej, YYYY-MM-DD)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Momento de creación del registro"
+        }
+      },
+      "required": ["id", "userId", "weight", "height", "bmi", "date"]
+    },
+    "GuestbookEntry": {
+      "title": "GuestbookEntry",
+      "description": "Firma del libro de visitas de un colega o paciente real",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID único de la entrada"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nombre o alias del visitante"
+        },
+        "message": {
+          "type": "string",
+          "description": "Mensaje de saludo"
+        },
+        "city": {
+          "type": "string",
+          "description": "Ciudad u origen de la visita"
+        },
+        "role": {
+          "type": "string",
+          "description": "Rol del firmante (ej. Médico, Paciente)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de creación"
+        }
+      },
+      "required": ["id", "name", "message", "city", "role"]
+    }
+  },
+  "firestore": {
+    "/guestbook/{entryId}": {
+      "schema": "GuestbookEntry",
+      "description": "Libro de visitas pública donde los profesionales o pacientes reales firman para saludar"
+    },
+    "/global_stats/{statId}": {
+      "schema": "GlobalStats",
+      "description": "Colección que almacena estadísticas globales incrementables por los clientes de forma segura"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Estadísticas acumuladas y preferencias estéticas de cada cuenta"
+    },
+    "/users/{userId}/messages/{messageId}": {
+      "schema": "ChatTurn",
+      "description": "Subcolección que registra en tiempo real todo el historial conversacional"
+    },
+    "/users/{userId}/bmi_history/{recordId}": {
+      "schema": "BmiRecord",
+      "description": "Subcolección para almacenar las mediciones históricas de IMC del usuario"
+    }
+  }
+}

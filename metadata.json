@@ -1,0 +1,6 @@
+{
+  "name": "Consultorio al paso",
+  "description": "Asistente médico inteligente para orientación de salud familiar, análisis de estudios clínicos o laboratorios y consultas asistidas por voz.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

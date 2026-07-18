@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- REUSABLE SECURITY UTILITIES & ABAC PRIMITIVES ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- STANDALONE SCHEMATIC BLUEPRINTS & VALIDATIONS ---
+    function isValidUser(data) {
+      return (data.get('uid', null) == null || (data.uid is string && data.uid == request.auth.uid))
+        && (data.get('email', null) == null || data.email is string)
+        && (data.get('theme', null) == null || data.theme is string);
+    }
+
+    function isValidChatTurn(data) {
+      return data.id is string 
+        && data.userId is string 
+        && data.userId == request.auth.uid
+        && (data.role == 'user' || data.role == 'assistant')
+        && data.content is string;
+    }
+
+    function isValidBmiRecord(data) {
+      return data.id is string 
+        && data.userId is string 
+        && data.userId == request.auth.uid
+        && data.weight is number
+        && data.height is number
+        && data.bmi is number
+        && data.date is string;
+    }
+
+    function isValidGuestbookEntry(data) {
+      return data.id is string
+        && data.name is string
+        && data.message is string
+        && data.city is string
+        && data.role is string;
+    }
+
+    // --- COLLECTION GATES ---
+
+    // 1. User profile and statistics collection
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+
+    // 2. User chronological messages collection (History of inputs and recommendations)
+    match /users/{userId}/messages/{messageId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+
+    // 4. BMI historical records collection
+    match /users/{userId}/bmi_history/{recordId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+
+    // 3. Global aggregate statistics (visits tracking config)
+    match /global_stats/{statId} {
+      allow read: if true;
+      allow create: if (statId == 'visits_counter'
+        && incoming().count == 1
+        && incoming().keys().hasAll(['count'])
+        && incoming().keys().size() == 1)
+        || (statId == 'donation_config' && request.auth != null && 'email' in request.auth.token && (request.auth.token.email == 'tarotistasonline@gmail.com' || request.auth.token.email == 'azulbaires@gmail.com'));
+      allow update: if (statId == 'visits_counter'
+        && incoming().count == existing().count + 1
+        && incoming().diff(existing()).affectedKeys().hasOnly(['count']))
+        || (statId == 'donation_config' && request.auth != null && 'email' in request.auth.token && (request.auth.token.email == 'tarotistasonline@gmail.com' || request.auth.token.email == 'azulbaires@gmail.com'));
+    }
+
+    // 5. Guestbook/Visitor dynamic signatures
+    match /guestbook/{entryId} {
+      allow read: if true;
+      allow create: if isValidId(entryId)
+        && isValidGuestbookEntry(incoming())
+        && incoming().createdAt == request.time;
+    }
+  }
+}
